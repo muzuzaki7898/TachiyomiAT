@@ -27,8 +27,6 @@ kotlin {
     }
 }
 
-val generatedAndroidResourceDir = generatedBuildDir.resolve("android/res")
-
 android {
     namespace = "tachiyomi.i18n.at"
 
@@ -36,7 +34,6 @@ android {
         val main by getting
         main.res.srcDirs(
             "src/commonMain/resources",
-            generatedAndroidResourceDir,
         )
     }
 
@@ -48,11 +45,4 @@ android {
 multiplatformResources {
     resourcesClassName.set("ATMR")
     resourcesPackage.set("tachiyomi.i18n.at")
-}
-
-tasks {
-    val localesConfigTask = project.getLocalesConfigTask(generatedAndroidResourceDir)
-    preBuild {
-        dependsOn(localesConfigTask)
-    }
 }

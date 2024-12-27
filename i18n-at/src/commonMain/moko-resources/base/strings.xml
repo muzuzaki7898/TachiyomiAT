@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="name">TachiyomiAT</string>
+
+    <string name="pref_category_translations">Translations</string>
+    <string name="pref_translation_summary">Automatic Translations</string>
+    <string name="manga_translate">Translate</string>
 </resources>
