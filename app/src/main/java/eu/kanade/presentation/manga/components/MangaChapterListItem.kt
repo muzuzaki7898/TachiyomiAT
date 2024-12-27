@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import eu.kanade.tachiyomi.data.download.model.Download
+import eu.kanade.translation.model.Translation
 import me.saket.swipe.SwipeableActionsBox
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
@@ -170,7 +171,12 @@ fun MangaChapterListItem(
                     }
                 }
             }
-
+            ChapterTranslationIndicator(
+                enabled = true,
+                modifier = Modifier.padding(start = 4.dp),
+                translationStateProvider ={ Translation.State.ERROR},
+                onClick = { },
+            )
             ChapterDownloadIndicator(
                 enabled = downloadIndicatorEnabled,
                 modifier = Modifier.padding(start = 4.dp),
