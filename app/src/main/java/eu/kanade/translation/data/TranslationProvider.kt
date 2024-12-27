@@ -50,7 +50,8 @@ class TranslationProvider(
      * @param source the source to query.
      */
     fun findSourceDir(source: Source): UniFile? {
-        return translationDir?.findFile(getSourceDirName(source))
+        val sourceDir=translationDir?.findFile(getSourceDirName(source))
+        return sourceDir;
     }
 
     /**
@@ -65,7 +66,7 @@ class TranslationProvider(
     }
 
     /**
-     * Returns the translation directory for a chapter if it exists.
+     * Returns the translation file for a chapter if it exists.
      *
      * @param chapterName the name of the chapter to query.
      * @param chapterScanlator scanlator of the chapter to query
@@ -73,9 +74,9 @@ class TranslationProvider(
      * @param source the source of the chapter.
      */
 
-    fun findChapterDir(chapterName: String, chapterScanlator: String?, mangaTitle: String, source: Source): UniFile? {
+    fun findTranslationFile(chapterName: String, chapterScanlator: String?, mangaTitle: String, source: Source): UniFile? {
         val mangaDir = findMangaDir(mangaTitle, source)
-        return mangaDir?.findFile(getChapterDirName(chapterName, chapterScanlator))
+        return mangaDir?.findFile(getTranslationFileName(chapterName, chapterScanlator))
     }
 
     /**
@@ -85,10 +86,10 @@ class TranslationProvider(
      * @param manga the manga of the chapter.
      * @param source the source of the chapter.
      */
-    fun findChapterDirs(chapters: List<Chapter>, manga: Manga, source: Source): Pair<UniFile?, List<UniFile>> {
+    fun findChapterFiles(chapters: List<Chapter>, manga: Manga, source: Source): Pair<UniFile?, List<UniFile>> {
         val mangaDir = findMangaDir(manga.title, source) ?: return null to emptyList()
         return mangaDir to chapters.mapNotNull { chapter ->
-            mangaDir.findFile(getChapterDirName(chapter.name, chapter.scanlator))
+            mangaDir.findFile(getTranslationFileName(chapter.name, chapter.scanlator))
         }
     }
 
@@ -116,11 +117,11 @@ class TranslationProvider(
      * @param chapterName the name of the chapter to query.
      * @param chapterScanlator scanlator of the chapter to query
      */
-    fun getChapterDirName(chapterName: String, chapterScanlator: String?): String {
+    fun getTranslationFileName(chapterName: String, chapterScanlator: String?): String {
         val newChapterName = sanitizeChapterName(chapterName)
         return DiskUtil.buildValidFilename(
             when {
-                !chapterScanlator.isNullOrBlank() -> "${chapterScanlator}_$newChapterName"
+                !chapterScanlator.isNullOrBlank() -> "${chapterScanlator}_$newChapterName.json"
                 else -> newChapterName
             },
         )
@@ -136,11 +137,5 @@ class TranslationProvider(
             "Chapter"
         }
     }
-
-    fun isChapterDirNameChanged(oldChapter: Chapter, newChapter: Chapter): Boolean {
-        return oldChapter.name != newChapter.name ||
-            oldChapter.scanlator?.takeIf { it.isNotBlank() } != newChapter.scanlator?.takeIf { it.isNotBlank() }
-    }
-
 
 }
