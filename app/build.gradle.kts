@@ -281,6 +281,14 @@ dependencies {
     implementation(libs.leakcanary.plumber)
 
     testImplementation(kotlinx.coroutines.test)
+
+    //TachiyomiAT
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.text.recognition.japanese)
+    implementation(libs.mlkit.text.recognition.korean)
+    implementation(libs.mlkit.text.recognition.chinese)
+    implementation(libs.mlkit.text.translate)
+    implementation(libs.google.generativeai)
 }
 
 androidComponents {
