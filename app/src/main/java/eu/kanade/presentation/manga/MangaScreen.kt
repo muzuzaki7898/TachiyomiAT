@@ -92,7 +92,7 @@ fun MangaScreen(
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     //TachiyomiAT
-    onTranslationClick: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
+    onTranslationChapter: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
@@ -171,7 +171,7 @@ fun MangaScreen(
             onChapterSelected = onChapterSelected,
             onAllChapterSelected = onAllChapterSelected,
             onInvertSelection = onInvertSelection,
-            onTranslationClick = onTranslationClick
+            onTranslationChapter = onTranslationChapter
         )
     } else {
         MangaScreenLargeImpl(
@@ -207,7 +207,7 @@ fun MangaScreen(
             onChapterSelected = onChapterSelected,
             onAllChapterSelected = onAllChapterSelected,
             onInvertSelection = onInvertSelection,
-            onTranslationClick = onTranslationClick
+            onTranslationChapter = onTranslationChapter
         )
     }
 }
@@ -223,7 +223,7 @@ private fun MangaScreenSmallImpl(
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     //TachiyomiAT
-    onTranslationClick: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
+    onTranslationChapter: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
@@ -451,7 +451,7 @@ private fun MangaScreenSmallImpl(
                         onDownloadChapter = onDownloadChapter,
                         onChapterSelected = onChapterSelected,
                         onChapterSwipe = onChapterSwipe,
-                        onTranslationClick=onTranslationClick,
+                        onTranslationChapter=onTranslationChapter,
                     )
                 }
             }
@@ -470,7 +470,7 @@ fun MangaScreenLargeImpl(
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     //TachiyomiAT
-    onTranslationClick: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
+    onTranslationChapter: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
@@ -693,7 +693,7 @@ fun MangaScreenLargeImpl(
                                 onDownloadChapter = onDownloadChapter,
                                 onChapterSelected = onChapterSelected,
                                 onChapterSwipe = onChapterSwipe,
-                                onTranslationClick = onTranslationClick
+                                onTranslationChapter = onTranslationChapter
                             )
                         }
                     }
@@ -754,7 +754,7 @@ private fun LazyListScope.sharedChapterItems(
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     //TachiyomiAT
-    onTranslationClick: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
+    onTranslationChapter: ((ChapterList.Item, ChapterTranslationAction) -> Unit)?,
     onChapterSelected: (ChapterList.Item, Boolean, Boolean, Boolean) -> Unit,
     onChapterSwipe: (ChapterList.Item, LibraryPreferences.ChapterSwipeAction) -> Unit,
 ) {
@@ -818,8 +818,8 @@ private fun LazyListScope.sharedChapterItems(
 
                     },
                     //TachiyomiAT
-                    onTranslationClick =  if (onTranslationClick != null) {
-                        { onTranslationClick(item, it) }
+                    onTranslationClick =  if (onTranslationChapter != null) {
+                        { onTranslationChapter(item, it) }
                     } else {
                         null
                     },

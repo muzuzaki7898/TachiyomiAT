@@ -29,6 +29,7 @@ import eu.kanade.domain.track.model.AutoTrackState
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.presentation.manga.DownloadAction
 import eu.kanade.presentation.manga.components.ChapterDownloadAction
+import eu.kanade.presentation.manga.components.ChapterTranslationAction
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.data.download.DownloadCache
 import eu.kanade.tachiyomi.data.download.DownloadManager
@@ -41,6 +42,7 @@ import eu.kanade.tachiyomi.ui.reader.setting.ReaderPreferences
 import eu.kanade.tachiyomi.util.chapter.getNextUnread
 import eu.kanade.tachiyomi.util.removeCovers
 import eu.kanade.tachiyomi.util.system.toast
+import eu.kanade.translation.TranslationManager
 import eu.kanade.translation.model.Translation
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -101,6 +103,8 @@ class MangaScreenModel(
     private val trackerManager: TrackerManager = Injekt.get(),
     private val trackChapter: TrackChapter = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
+    //TachiyomiAT
+    private val translationManager: TranslationManager = Injekt.get(),
     private val downloadCache: DownloadCache = Injekt.get(),
     private val getMangaAndChapters: GetMangaWithChapters = Injekt.get(),
     private val getDuplicateLibraryManga: GetDuplicateLibraryManga = Injekt.get(),
@@ -668,6 +672,28 @@ class MangaScreenModel(
                 if (result == SnackbarResult.ActionPerformed && !isFavorited) {
                     toggleFavorite()
                 }
+            }
+        }
+    }
+    //TachiyomiAT
+    fun runChapterTranslationActions(
+        item: ChapterList.Item,
+        action: ChapterTranslationAction,
+    ) {
+        when (action) {
+            ChapterTranslationAction.START -> {
+                logcat{"START"}
+//                startDownload(items.map { it.chapter }, false)
+//                if (items.any { it.downloadState == Download.State.ERROR }) {
+//                    downloadManager.startDownloads()
+//                }
+            }
+            ChapterTranslationAction.CANCEL -> {
+//                val chapterId = items.singleOrNull()?.id ?: return
+//                cancelDownload(chapterId)
+            }
+            ChapterTranslationAction.DELETE -> {
+//                deleteChapters(items.map { it.chapter })
             }
         }
     }
