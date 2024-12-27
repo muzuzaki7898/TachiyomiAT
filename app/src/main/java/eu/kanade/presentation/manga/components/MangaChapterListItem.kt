@@ -57,12 +57,16 @@ fun MangaChapterListItem(
     selected: Boolean,
     downloadIndicatorEnabled: Boolean,
     downloadStateProvider: () -> Download.State,
+    //TachiyomiAT
+    translationStateProvider: () -> Translation.State,
     downloadProgressProvider: () -> Int,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
     onDownloadClick: ((ChapterDownloadAction) -> Unit)?,
+    //TachiyomiAT
+    onTranslationClick: ((ChapterTranslationAction) -> Unit)?,
     onChapterSwipe: (LibraryPreferences.ChapterSwipeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -171,12 +175,15 @@ fun MangaChapterListItem(
                     }
                 }
             }
-            ChapterTranslationIndicator(
-                enabled = true,
-                modifier = Modifier.padding(start = 4.dp),
-                translationStateProvider ={ Translation.State.ERROR},
-                onClick = { },
-            )
+            //TachiyomiAT
+            if(downloadStateProvider()==Download.State.DOWNLOADED){
+                ChapterTranslationIndicator(
+                    enabled = true,
+                    modifier = Modifier.padding(start = 4.dp),
+                    translationStateProvider = translationStateProvider,
+                    onClick = { onTranslationClick?.invoke(it) },
+                )
+            }
             ChapterDownloadIndicator(
                 enabled = downloadIndicatorEnabled,
                 modifier = Modifier.padding(start = 4.dp),
