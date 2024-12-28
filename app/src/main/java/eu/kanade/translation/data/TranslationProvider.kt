@@ -122,7 +122,7 @@ class TranslationProvider(
         return DiskUtil.buildValidFilename(
             when {
                 !chapterScanlator.isNullOrBlank() -> "${chapterScanlator}_$newChapterName.json"
-                else -> newChapterName
+                else -> "$newChapterName.json"
             },
         )
     }

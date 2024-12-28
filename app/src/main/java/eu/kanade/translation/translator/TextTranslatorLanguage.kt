@@ -1,8 +1,6 @@
 package eu.kanade.translation.translator
 
 import com.google.mlkit.nl.translate.TranslateLanguage
-import eu.kanade.translation.recognizer.TextRecognizerLanguage
-import eu.kanade.translation.recognizer.TextRecognizerLanguage.CHINESE
 import tachiyomi.core.common.preference.Preference
 
 enum class TextTranslatorLanguage(val code: String, val label: String) {

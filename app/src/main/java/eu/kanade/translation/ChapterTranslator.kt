@@ -1,11 +1,17 @@
 package eu.kanade.translation
 
 import android.content.Context
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
+import com.hippo.unifile.UniFile
+import eu.kanade.tachiyomi.data.download.DownloadProvider
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.ui.reader.setting.ReadingMode
+import eu.kanade.tachiyomi.util.lang.compareToCaseInsensitiveNaturalOrder
 import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.translation.data.TranslationProvider
+import eu.kanade.translation.model.PageTranslation
 import eu.kanade.translation.model.Translation
+import eu.kanade.translation.model.TranslationBlock
 import eu.kanade.translation.recognizer.TextRecognizer
 import eu.kanade.translation.recognizer.TextRecognizerLanguage
 import eu.kanade.translation.translator.TextTranslator
@@ -27,8 +33,12 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import logcat.LogPriority
+import mihon.core.archive.archiveReader
 import tachiyomi.core.common.util.lang.launchIO
+import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
@@ -37,10 +47,13 @@ import tachiyomi.domain.translation.TranslationPreferences
 import tachiyomi.i18n.at.ATMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.InputStream
+
 
 class ChapterTranslator(
     private val context: Context,
     private val provider: TranslationProvider,
+    private val downloadProvider: DownloadProvider = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val translationPreferences: TranslationPreferences = Injekt.get(),
 ) {
@@ -175,121 +188,104 @@ class ChapterTranslator(
         addToQueue(translation);
     }
 
-    //TODO
     private suspend fun translateChapter(translation: Translation) {
-        if (translation.fromLang != textRecognizer.language) {
-            textRecognizer.close()
-            textRecognizer = TextRecognizer(translation.fromLang)
-        }
-        if (translation.fromLang != textTranslator.fromLang || translation.toLang != textTranslator.toLang) {
-            textTranslator.close()
-            textTranslator = TextTranslators.fromPref(translationPreferences.translationEngine())
-                .build(translationPreferences, translation.fromLang, translation.toLang)
-        }
+        try {
+            logcat { "TRANSLATING CHAPTER" }
+            //Check if recognizer reinitialization is needed
+            if (translation.fromLang != textRecognizer.language) {
+                textRecognizer.close()
+                textRecognizer = TextRecognizer(translation.fromLang)
+            }
+            //Check if translator reinitialization is needed
+            if (translation.fromLang != textTranslator.fromLang || translation.toLang != textTranslator.toLang) {
+                textTranslator.close()
+                textTranslator = TextTranslators.fromPref(translationPreferences.translationEngine())
+                    .build(translationPreferences, translation.fromLang, translation.toLang)
+            }
+            //Directory where translations for a manga is stored
+            val translationMangaDir = provider.getMangaDir(translation.manga.title, translation.source)
 
-        logcat { "TRANSLATING CHAPTER" }
-        val mangaDir = provider.getMangaDir(translation.manga.title, translation.source)
-        val filename = provider.getTranslationFileName(translation.chapter.name, translation.chapter.scanlator)
-        mangaDir.createFile(filename)
-        translation.status = Translation.State.TRANSLATED
-        logcat { "TRANSLATED CHAPTER" }
-//        val mangaDir = provider.getMangaDir(download.manga.title, download.source)
-//
-//        val availSpace = DiskUtil.getAvailableStorageSpace(mangaDir)
-//        if (availSpace != -1L && availSpace < MIN_DISK_SPACE) {
-//            download.status = Download.State.ERROR
-//            notifier.onError(
-//                context.stringResource(MR.strings.download_insufficient_space),
-//                download.chapter.name,
-//                download.manga.title,
-//                download.manga.id,
-//            )
-//            return
-//        }
-//
-//        val chapterDirname = provider.getChapterDirName(download.chapter.name, download.chapter.scanlator)
-//        val tmpDir = mangaDir.createDirectory(chapterDirname + TMP_DIR_SUFFIX)!!
-//
-//        try {
-//            // If the page list already exists, start from the file
-//            val pageList = download.pages ?: run {
-//                // Otherwise, pull page list from network and add them to download object
-//                val pages = download.source.getPageList(download.chapter.toSChapter())
-//
-//                if (pages.isEmpty()) {
-//                    throw Exception(context.stringResource(MR.strings.page_list_empty_error))
-//                }
-//                // Don't trust index from source
-//                val reIndexedPages = pages.mapIndexed { index, page -> Page(index, page.url, page.imageUrl, page.uri) }
-//                download.pages = reIndexedPages
-//                reIndexedPages
-//            }
-//
-//            // Delete all temporary (unfinished) files
-//            tmpDir.listFiles()
-//                ?.filter { it.extension == "tmp" }
-//                ?.forEach { it.delete() }
-//
-//            download.status = Download.State.DOWNLOADING
-//
-//            // Start downloading images, consider we can have downloaded images already
-//            // Concurrently do 2 pages at a time
-//            pageList.asFlow()
-//                .flatMapMerge(concurrency = 2) { page ->
-//                    flow {
-//                        // Fetch image URL if necessary
-//                        if (page.imageUrl.isNullOrEmpty()) {
-//                            page.status = Page.State.LOAD_PAGE
-//                            try {
-//                                page.imageUrl = download.source.getImageUrl(page)
-//                            } catch (e: Throwable) {
-//                                page.status = Page.State.ERROR
-//                            }
-//                        }
-//
-//                        withIOContext { getOrDownloadImage(page, download, tmpDir) }
-//                        emit(page)
-//                    }.flowOn(Dispatchers.IO)
-//                }
-//                .collect {
-//                    // Do when page is downloaded.
-//                    notifier.onProgressChange(download)
-//                }
-//
-//            // Do after download completes
-//
-//            if (!isDownloadSuccessful(download, tmpDir)) {
-//                download.status = Download.State.ERROR
-//                return
-//            }
-//
-//            createComicInfoFile(
-//                tmpDir,
-//                download.manga,
-//                download.chapter,
-//                download.source,
-//            )
-//
-//            // Only rename the directory if it's downloaded
-//            if (downloadPreferences.saveChaptersAsCBZ().get()) {
-//                archiveChapter(mangaDir, chapterDirname, tmpDir)
-//            } else {
-//                tmpDir.renameTo(chapterDirname)
-//            }
-//            cache.addChapter(chapterDirname, mangaDir, download.manga)
-//
-//            DiskUtil.createNoMediaFile(tmpDir, context)
-//
-//            download.status = Download.State.DOWNLOADED
-//        } catch (error: Throwable) {
-//            if (error is CancellationException) throw error
-//            // If the page list threw, it will resume here
-//            logcat(LogPriority.ERROR, error)
-//            download.status = Download.State.ERROR
-//            notifier.onError(error.message, download.chapter.name, download.manga.title, download.manga.id)
-//        }
+            //translations save file
+            val saveFile = provider.getTranslationFileName(translation.chapter.name, translation.chapter.scanlator)
+
+            //Directory where chapter images is stored
+            val chapterPath = downloadProvider.findChapterDir(
+                translation.chapter.name,
+                translation.chapter.scanlator,
+                translation.manga.title,
+                translation.source,
+            )!!
+
+            val pages = mutableMapOf<String, PageTranslation>()
+            val tmpFile = translationMangaDir.createFile("tmp")!!
+            val streams = getChapterPages(chapterPath)
+            /**
+             * saving the stream to tmp file cuz i can't get the
+             * BitmapFactory.decodeStream() to work with the stream from .cbz archive
+             */
+            for ((fileName, streamFn) in streams) {
+
+                streamFn().use { tmpFile.openOutputStream().use { out -> it.copyTo(out) } }
+                val image = InputImage.fromFilePath(context, tmpFile.uri)
+                val result = textRecognizer.recognize(image)
+                val blocks = result.textBlocks.filter { it.boundingBox != null && it.text.length > 1 }
+                val translation = convertToPageTranslation(blocks, image.width, image.height)
+                if (translation.blocks.isNotEmpty()) pages.put(fileName, translation)
+            }
+            tmpFile.delete()
+
+            //Translate the text in blocks , this mutates the original blocks
+            textTranslator.translate(pages)
+
+            //Serialize the Map and save to translations json file
+            Json.encodeToStream(pages, translationMangaDir.createFile(saveFile)!!.openOutputStream())
+            translation.status = Translation.State.TRANSLATED
+            logcat { "TRANSLATED CHAPTER" }
+
+        } catch (error: Throwable) {
+            translation.status = Translation.State.ERROR
+            logcat(LogPriority.ERROR, error)
+        }
     }
 
+    private fun convertToPageTranslation(blocks: List<Text.TextBlock>, width: Int, height: Int): PageTranslation {
+        //TODO IMPLEMENT SMART BLOCK MERGE
+        //TODO DO EXTRA SHIT FOR JAPANESE
+        //TODO USE NON PIXEL DEPENDENT UNIT
+        val translation = PageTranslation(imgWidth = width.toFloat(), imgHeight = height.toFloat())
+        for (block in blocks) {
+            val bounds = block.boundingBox!!
+            translation.blocks.add(
+                TranslationBlock(
+                    text = block.text,
+                    width = bounds.width().toFloat(),
+                    height = bounds.height().toFloat(),
+                    symWidth = 0f,
+                    symHeight = 0f,
+                    angle = 0f,
+                    x = bounds.left.toFloat(),
+                    y = bounds.top.toFloat(),
+                ),
+            )
+        }
+        return translation
+    }
+
+    private fun getChapterPages(chapterPath: UniFile): List<Pair<String, () -> InputStream>> {
+        if (chapterPath.isFile) {
+            val reader = chapterPath.archiveReader(context)
+            return reader.useEntries { entries ->
+                entries.filter { it.isFile && ImageUtil.isImage(it.name) { reader.getInputStream(it.name)!! } }
+                    .sortedWith { f1, f2 -> f1.name.compareToCaseInsensitiveNaturalOrder(f2.name) }.map { entry ->
+                        Pair(entry.name) { reader.getInputStream(entry.name)!! }
+                    }.toList()
+            }
+        } else {
+            return chapterPath.listFiles()!!.filter { ImageUtil.isImage(it.name) }.map { entry ->
+                Pair(entry.name!!) { entry.openInputStream() }
+            }.toList()
+        }
+    }
 
     private fun areAllTranslationsFinished(): Boolean {
         return queueState.value.none { it.status.value <= Translation.State.TRANSLATING.value }

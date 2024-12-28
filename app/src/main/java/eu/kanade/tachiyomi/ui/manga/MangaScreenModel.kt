@@ -757,6 +757,17 @@ class MangaScreenModel(
                                 state.manga,
                                 state.source,
                             )
+                             updateSuccessState { successState ->
+                                val modifiedIndex = successState.chapters.indexOfFirst { it.id == item.chapter.id }
+                                if (modifiedIndex < 0) return@updateSuccessState successState
+
+                                val newChapters = successState.chapters.toMutableList().apply {
+                                    val item = removeAt(modifiedIndex)
+                                        .copy(translationState = Translation.State.NOT_TRANSLATED)
+                                    add(modifiedIndex, item)
+                                }
+                                successState.copy(chapters = newChapters)
+                            }
                         }
                     } catch (e: Throwable) {
                         logcat(LogPriority.ERROR, e)

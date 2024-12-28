@@ -1,6 +1,6 @@
 package eu.kanade.translation.translator
 
-import eu.kanade.translation.recognizer.MLKitTranslator
+import eu.kanade.translation.model.PageTranslation
 import eu.kanade.translation.recognizer.TextRecognizerLanguage
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.domain.translation.TranslationPreferences
@@ -8,11 +8,10 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.Closeable
 
-
 interface TextTranslator : Closeable {
     val fromLang: TextRecognizerLanguage
     val toLang: TextTranslatorLanguage
-//    suspend fun translate(pages: HashMap<String, TextTranslations>)
+    suspend fun translate(pages: MutableMap<String, PageTranslation>)
 }
 
 enum class TextTranslators(val label: String) {
