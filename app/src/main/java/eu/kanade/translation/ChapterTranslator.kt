@@ -1,69 +1,42 @@
-package eu.kanade.tachiyomi.data.download
+package eu.kanade.translation
 
 import android.content.Context
-import com.hippo.unifile.UniFile
-import eu.kanade.domain.chapter.model.toSChapter
-import eu.kanade.domain.manga.model.getComicInfo
-import eu.kanade.tachiyomi.data.cache.ChapterCache
-import eu.kanade.tachiyomi.data.download.model.Download
-import eu.kanade.tachiyomi.data.library.LibraryUpdateNotifier
-import eu.kanade.tachiyomi.data.notification.NotificationHandler
-import eu.kanade.tachiyomi.source.UnmeteredSource
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.HttpSource
-import eu.kanade.tachiyomi.util.storage.DiskUtil
-import eu.kanade.tachiyomi.util.storage.DiskUtil.NOMEDIA_FILE
-import eu.kanade.tachiyomi.util.storage.saveTo
+import eu.kanade.tachiyomi.ui.reader.setting.ReadingMode
+import eu.kanade.tachiyomi.util.system.toast
 import eu.kanade.translation.data.TranslationProvider
 import eu.kanade.translation.model.Translation
+import eu.kanade.translation.recognizer.TextRecognizer
+import eu.kanade.translation.recognizer.TextRecognizerLanguage
+import eu.kanade.translation.translator.TextTranslator
+import eu.kanade.translation.translator.TextTranslatorLanguage
+import eu.kanade.translation.translator.TextTranslators
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import logcat.LogPriority
-import mihon.core.archive.ZipWriter
-import nl.adaptivity.xmlutil.serialization.XML
-import okhttp3.Response
-import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.core.common.storage.extension
 import tachiyomi.core.common.util.lang.launchIO
-import tachiyomi.core.common.util.lang.launchNow
-import tachiyomi.core.common.util.lang.withIOContext
-import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.core.metadata.comicinfo.COMIC_INFO_FILE
-import tachiyomi.core.metadata.comicinfo.ComicInfo
-import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.chapter.model.Chapter
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.translation.TranslationPreferences
-import tachiyomi.i18n.MR
+import tachiyomi.i18n.at.ATMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.File
-import java.util.Locale
 
 class ChapterTranslator(
     private val context: Context,
@@ -85,8 +58,15 @@ class ChapterTranslator(
     @Volatile
     var isPaused: Boolean = false
 
+    private var textRecognizer: TextRecognizer
+    private var textTranslator: TextTranslator
+
     init {
-        //TODO initialize actual translator
+        val fromLang = TextRecognizerLanguage.fromPref(translationPreferences.translateFromLanguage())
+        val toLang = TextTranslatorLanguage.fromPref(translationPreferences.translateToLanguage())
+        textRecognizer = TextRecognizer(fromLang)
+        textTranslator = TextTranslators.fromPref(translationPreferences.translationEngine())
+            .build(translationPreferences, fromLang, toLang)
     }
 
     fun start(): Boolean {
@@ -103,8 +83,7 @@ class ChapterTranslator(
 
     fun stop(reason: String? = null) {
         cancelTranslatorJob()
-        queueState.value
-            .filter { it.status == Translation.State.TRANSLATING }
+        queueState.value.filter { it.status == Translation.State.TRANSLATING }
             .forEach { it.status = Translation.State.ERROR }
         if (reason != null) return
         isPaused = false
@@ -112,8 +91,7 @@ class ChapterTranslator(
 
     fun pause() {
         cancelTranslatorJob()
-        queueState.value
-            .filter { it.status == Translation.State.TRANSLATING }
+        queueState.value.filter { it.status == Translation.State.TRANSLATING }
             .forEach { it.status = Translation.State.QUEUE }
         isPaused = true
     }
@@ -129,12 +107,9 @@ class ChapterTranslator(
         translationJob = scope.launch {
             val activeTranslationFlow = queueState.transformLatest { queue ->
                 while (true) {
-                    val activeTranslations = queue.asSequence()
-                        .filter { it.status.value <= Translation.State.TRANSLATING.value }
-                        .groupBy { it.source }
-                        .toList()
-                        .take(5)
-                        .map { (_, translations) -> translations.first() }
+                    val activeTranslations =
+                        queue.asSequence().filter { it.status.value <= Translation.State.TRANSLATING.value }
+                            .groupBy { it.source }.toList().take(5).map { (_, translations) -> translations.first() }
                     emit(activeTranslations)
 
                     if (activeTranslations.isEmpty()) break
@@ -189,17 +164,35 @@ class ChapterTranslator(
         val source = sourceManager.get(manga.source) as? HttpSource ?: return
         if (provider.findTranslationFile(chapter.name, chapter.scanlator, manga.title, source) != null) return
         if (queueState.value.any { it.chapter.id == chapter.id }) return
-        val translation = Translation(source, manga, chapter);
+        val fromLang = TextRecognizerLanguage.fromPref(translationPreferences.translateFromLanguage())
+        val toLang = TextTranslatorLanguage.fromPref(translationPreferences.translateToLanguage())
+        val engine = TextTranslators.fromPref(translationPreferences.translationEngine())
+        if (engine == TextTranslators.MLKIT && !TextTranslatorLanguage.mlkitSupportedLanguages().contains(toLang)) {
+            context.toast(ATMR.strings.error_mlkit_language_unsupported)
+            return
+        }
+        val translation = Translation(source, manga, chapter, fromLang, toLang);
         addToQueue(translation);
     }
+
     //TODO
     private suspend fun translateChapter(translation: Translation) {
-        logcat{"TRANSLATING CHAPTER"}
+        if (translation.fromLang != textRecognizer.language) {
+            textRecognizer.close()
+            textRecognizer = TextRecognizer(translation.fromLang)
+        }
+        if (translation.fromLang != textTranslator.fromLang || translation.toLang != textTranslator.toLang) {
+            textTranslator.close()
+            textTranslator = TextTranslators.fromPref(translationPreferences.translationEngine())
+                .build(translationPreferences, translation.fromLang, translation.toLang)
+        }
+
+        logcat { "TRANSLATING CHAPTER" }
         val mangaDir = provider.getMangaDir(translation.manga.title, translation.source)
         val filename = provider.getTranslationFileName(translation.chapter.name, translation.chapter.scanlator)
         mangaDir.createFile(filename)
         translation.status = Translation.State.TRANSLATED
-        logcat{"TRANSLATED CHAPTER"}
+        logcat { "TRANSLATED CHAPTER" }
 //        val mangaDir = provider.getMangaDir(download.manga.title, download.source)
 //
 //        val availSpace = DiskUtil.getAvailableStorageSpace(mangaDir)
@@ -303,7 +296,7 @@ class ChapterTranslator(
     }
 
     private fun addToQueue(translation: Translation) {
-        translation.status= Translation.State.QUEUE;
+        translation.status = Translation.State.QUEUE;
         _queueState.update {
             it + translation
         }
@@ -311,8 +304,8 @@ class ChapterTranslator(
 
     private fun removeFromQueue(translation: Translation) {
         _queueState.update {
-           if (translation.status == Translation.State.TRANSLATING || translation.status == Translation.State.QUEUE) {
-            translation.status = Translation.State.NOT_TRANSLATED
+            if (translation.status == Translation.State.TRANSLATING || translation.status == Translation.State.QUEUE) {
+                translation.status = Translation.State.NOT_TRANSLATED
             }
             it - translation
         }

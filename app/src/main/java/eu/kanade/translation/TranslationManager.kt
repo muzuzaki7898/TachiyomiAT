@@ -1,13 +1,7 @@
 package eu.kanade.translation
 
 import android.content.Context
-import eu.kanade.tachiyomi.data.download.ChapterTranslator
-import eu.kanade.tachiyomi.data.download.DownloadJob
-import eu.kanade.tachiyomi.data.download.DownloadPendingDeleter
-import eu.kanade.tachiyomi.data.download.Downloader
-import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.source.Source
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.translation.data.TranslationProvider
 import eu.kanade.translation.model.Translation
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +12,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
-
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
