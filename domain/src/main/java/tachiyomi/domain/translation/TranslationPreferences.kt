@@ -15,5 +15,5 @@ class TranslationPreferences(
     fun translationEngineModel() = preferenceStore.getString("translation_engine_model", "gemini-1.5-pro")
     fun translationEngineApiKey() = preferenceStore.getString("translation_engine_api_key", "")
     fun translationEngineTemperature() = preferenceStore.getString("translation_engine_temperature", "1")
-    fun translationEngineMaxOutputTokens() = preferenceStore.getInt("translation_engine_output_tokens", 8192)
+    fun translationEngineMaxOutputTokens() = preferenceStore.getString("translation_engine_output_tokens", "8192")
 }
