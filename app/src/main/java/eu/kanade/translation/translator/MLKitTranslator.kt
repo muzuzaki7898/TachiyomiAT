@@ -25,7 +25,9 @@ class MLKitTranslator(
         Tasks.await(translator.downloadModelIfNeeded(conditions))
         pages.mapValues { (_, v) ->
             v.blocks.map { b ->
-                b.translation = Tasks.await(translator.translate(b.text))
+                b.translation = b.text.split("\n").mapNotNull {
+                    Tasks.await(translator.translate(it)).takeIf { it.isNotEmpty() }
+                }.joinToString("\n")
             }
         }
     }

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
@@ -26,11 +29,14 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.toFontFamily
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
 import androidx.core.view.isVisible
 import eu.kanade.translation.data.TranslationFont
@@ -101,7 +107,7 @@ class WebtoonTranslationsView :
             val padY = block.symHeight / 2
             val bgX = (block.x - padX / 2) * scaleFactor
             val bgY = (block.y - padY / 2) * scaleFactor
-            val bgWidth = (block.width + padY) * scaleFactor
+            val bgWidth = (block.width + padX) * scaleFactor
             val bgHeight = (block.height + padY) * scaleFactor
             val isVertical = block.angle > 85
             Box(
@@ -109,7 +115,7 @@ class WebtoonTranslationsView :
                     .offset(pxToDp(bgX), pxToDp(bgY))
                     .size(pxToDp(bgWidth), pxToDp(bgHeight))
                     .rotate(if (isVertical) 0f else block.angle)
-                    .background(Color.Blue.copy(alpha = 0.5f), shape = RoundedCornerShape(4.dp)),
+                    .background(Color.LightGray, shape = RoundedCornerShape(4.dp)),
             )
         }
     }
@@ -117,21 +123,80 @@ class WebtoonTranslationsView :
     @Composable
     fun TextBlockContent(scaleFactor: Float) {
         translation.blocks.forEach { block ->
-            val padX = block.symWidth / 2
-            val padY = block.symHeight / 2
+            val padX = block.symWidth * 2
+            val padY = block.symHeight
             val xPx = (block.x - padX / 2) * scaleFactor
-            val yPx = (block.y - padX / 2) * scaleFactor
-            val width = (block.width + padY) * scaleFactor
+            val yPx = (block.y - padY / 2) * scaleFactor
+            val width = (block.width + padX) * scaleFactor
             val height = (block.height + padY) * scaleFactor
             val isVertical = block.angle > 85
-            TextBlock(
-                block = block,
+            val style = LocalTextStyle.current.copy()
+            var resizedTextStyle by remember {
+                mutableStateOf(style)
+            }
+            var shouldDraw by remember {
+                mutableStateOf(false)
+            }
+
+            val defaultFontSize = LocalTextStyle.current.fontSize
+            Box(
                 modifier = Modifier
                     .offset(pxToDp(xPx), pxToDp(yPx))
                     .size(pxToDp(width), pxToDp(height)),
-            )
+            ) {
+                Text(
+                    text = block.translation,
+                    color = Color.Black,
+                    fontFamily = fontFamily,
+                    overflow = TextOverflow.Clip,
+                    textAlign = TextAlign.Center,
+                    style = resizedTextStyle,
+                    softWrap = true,
+                    modifier = Modifier
+                        .rotate(block.angle)
+                        .align(Alignment.Center)
+                        .drawWithContent {
+                            if (shouldDraw) {
+                                drawContent()
+                            }
+                        },
+
+                    onTextLayout = { result ->
+                        if (result.didOverflowWidth) {
+                            if (style.fontSize.isUnspecified) {
+                                resizedTextStyle = resizedTextStyle.copy(
+                                    fontSize = defaultFontSize,
+                                )
+                            }
+                            resizedTextStyle = resizedTextStyle.copy(
+                                fontSize = resizedTextStyle.fontSize * 0.95,
+                            )
+                        } else {
+                            shouldDraw = true
+                        }
+                    },
+                )
+            }
         }
     }
+//    @Composable
+//    fun TextBlockContent(scaleFactor: Float) {
+//        translation.blocks.forEach { block ->
+//            val padX = block.symWidth*2
+//            val padY = block.symHeight
+//            val xPx = (block.x - padX / 2) * scaleFactor
+//            val yPx = (block.y - padY / 2) * scaleFactor
+//            val width = (block.width + padX) * scaleFactor
+//            val height = (block.height + padY) * scaleFactor
+//            val isVertical = block.angle > 85
+//            TextBlock(
+//                block = block,
+//                modifier = Modifier
+//                    .offset(pxToDp(xPx), pxToDp(yPx))
+//                    .size(pxToDp(width), pxToDp(height)),
+//            )
+//        }
+//    }
 //    @Composable
 //    fun TranslationsContent(translation: PageTranslation) {
 //        var size by remember { mutableStateOf(IntSize.Zero) }
@@ -187,24 +252,39 @@ class WebtoonTranslationsView :
 //        }
 //    }
 
+    //    @Composable
+//    fun TextBlock(block: TranslationBlock, modifier: Modifier) {
+//        Box(modifier = modifier) {
+//            AutoSizeText(
+//                text = block.translation,
+//                color = Color.Black,
+//                softWrap = true,
+//                fontFamily = fontFamily,
+//                lineSpacingRatio = 1.2f,
+//                overflow = TextOverflow.Clip,
+//                alignment = Alignment.Center,
+//                minTextSize = 8.sp,
+//                stroke = 8f,
+//                modifier = Modifier
+//                    .rotate(block.angle)
+//                    .align(Alignment.Center)
+//                )
+//        }
+//    }
     @Composable
     fun TextBlock(block: TranslationBlock, modifier: Modifier) {
         Box(modifier = modifier) {
-            AutoSizeText(
+            Text(
                 text = block.translation,
                 color = Color.Black,
                 softWrap = true,
                 fontFamily = fontFamily,
-                lineSpacingRatio = 1.2f,
                 overflow = TextOverflow.Clip,
-                alignment = Alignment.Center,
-                minTextSize = 10.sp,
-                style = TextStyle(),
-                stroke = 8f,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .rotate(block.angle),
-
-                )
+                    .rotate(block.angle)
+                    .align(Alignment.Center),
+            )
         }
     }
 
@@ -216,7 +296,12 @@ class WebtoonTranslationsView :
         isVisible = false
     }
 
+    private fun pxToSp(px: Float): TextUnit {
+        return (px / (context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).sp
+    }
+
     private fun pxToDp(px: Float): Dp {
         return (px / (context.resources.displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).dp
     }
 }
+
