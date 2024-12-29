@@ -190,7 +190,6 @@ class ChapterTranslator(
 
     private suspend fun translateChapter(translation: Translation) {
         try {
-            logcat { "TRANSLATING CHAPTER" }
             //Check if recognizer reinitialization is needed
             if (translation.fromLang != textRecognizer.language) {
                 textRecognizer.close()
@@ -240,7 +239,6 @@ class ChapterTranslator(
             //Serialize the Map and save to translations json file
             Json.encodeToStream(pages, translationMangaDir.createFile(saveFile)!!.openOutputStream())
             translation.status = Translation.State.TRANSLATED
-            logcat { "TRANSLATED CHAPTER" }
 
         } catch (error: Throwable) {
             translation.status = Translation.State.ERROR
@@ -255,14 +253,15 @@ class ChapterTranslator(
         val translation = PageTranslation(imgWidth = width.toFloat(), imgHeight = height.toFloat())
         for (block in blocks) {
             val bounds = block.boundingBox!!
+            val symBounds = block.lines.first().elements.first().symbols.first().boundingBox!!
             translation.blocks.add(
                 TranslationBlock(
                     text = block.text,
                     width = bounds.width().toFloat(),
                     height = bounds.height().toFloat(),
-                    symWidth = 0f,
-                    symHeight = 0f,
-                    angle = 0f,
+                    symWidth = symBounds.width().toFloat(),
+                    symHeight = symBounds.height().toFloat(),
+                    angle = block.lines.first().angle,
                     x = bounds.left.toFloat(),
                     y = bounds.top.toFloat(),
                 ),

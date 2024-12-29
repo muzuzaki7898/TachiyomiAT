@@ -1,8 +1,10 @@
 package eu.kanade.translation
 
 import android.content.Context
+import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.translation.data.TranslationProvider
+import eu.kanade.translation.model.PageTranslation
 import eu.kanade.translation.model.Translation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -12,6 +14,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
@@ -84,6 +88,37 @@ class TranslationManager(
         if (source == null) return false
         val file = provider.findTranslationFile(chapterName, chapterScanlator, mangaTitle, source);
         return file?.exists() == true
+    }
+    fun getChapterTranslation(
+        chapterName: String,
+        scanlator: String?,
+        title: String,
+        source: Source,
+    ): Map<String, PageTranslation> {
+        try {
+            val file = provider.findTranslationFile(
+                chapterName,
+                scanlator,
+                title,
+                source,
+            ) ?: return emptyMap()
+            return getChapterTranslation(file)
+        } catch (_: Exception) {
+
+        }
+        return emptyMap()
+
+    }
+
+    fun getChapterTranslation(
+        file: UniFile,
+    ): Map<String, PageTranslation> {
+        try {
+            return Json.decodeFromStream<Map<String, PageTranslation>>(file.openInputStream())
+        } catch (e: Exception) {
+            file.delete()
+        }
+        return emptyMap()
     }
 
     fun deleteTranslation(chapter: Chapter, manga: Manga, source: Source) {

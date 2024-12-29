@@ -10,8 +10,10 @@ import tachiyomi.i18n.MR
 class ReaderPreferences(
     private val preferenceStore: PreferenceStore,
 ) {
-
     // region General
+
+    //TachiyomiAT
+    fun showTranslations() = preferenceStore.getBoolean("show_translations", true)
 
     fun pageTransitions() = preferenceStore.getBoolean("pref_enable_transitions_key", true)
 

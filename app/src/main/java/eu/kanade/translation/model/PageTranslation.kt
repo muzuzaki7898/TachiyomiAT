@@ -11,6 +11,7 @@ data class PageTranslation(
     companion object {
         val EMPTY = PageTranslation()
     }
+
 }
 
 @Serializable
