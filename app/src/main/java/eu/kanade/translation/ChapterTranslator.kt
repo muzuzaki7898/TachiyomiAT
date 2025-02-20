@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToStream
 import logcat.LogPriority
@@ -198,7 +199,9 @@ class ChapterTranslator(
             }
             //Check if translator reinitialization is needed
             if (translation.fromLang != textTranslator.fromLang || translation.toLang != textTranslator.toLang) {
-                textTranslator.close()
+                withContext(Dispatchers.IO) {
+                    textTranslator.close()
+                }
                 textTranslator = TextTranslators.fromPref(translationPreferences.translationEngine())
                     .build(translationPreferences, translation.fromLang, translation.toLang)
             }
@@ -229,8 +232,8 @@ class ChapterTranslator(
                 val image = InputImage.fromFilePath(context, tmpFile.uri)
                 val result = textRecognizer.recognize(image)
                 val blocks = result.textBlocks.filter { it.boundingBox != null && it.text.length > 1 }
-                val translation = convertToPageTranslation(blocks, image.width, image.height)
-                if (translation.blocks.isNotEmpty()) pages.put(fileName, translation)
+                val pageTranslation = convertToPageTranslation(blocks, image.width, image.height)
+                if (pageTranslation.blocks.isNotEmpty()) pages[fileName] = pageTranslation
             }
             tmpFile.delete()
 

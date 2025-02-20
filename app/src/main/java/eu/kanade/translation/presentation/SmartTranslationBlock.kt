@@ -66,7 +66,6 @@ fun SmartTranslationBlock(
                             .width(width)
                             .rotate(if (isVertical) 0f else block.angle)
                             .align(Alignment.Center)
-                            .background(color = Color.Red),
                     )
                 }[0].measure(Constraints(maxWidth = maxWidthPx))
 
@@ -94,7 +93,7 @@ fun SmartTranslationBlock(
                         .width(width)
                         .rotate(if (isVertical) 0f else block.angle)
                         .align(Alignment.Center)
-                        .background(color = Color.Red),
+//                        .background(color = Color.Red),
                 )
             }[0].measure(constraints)
 

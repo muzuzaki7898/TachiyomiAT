@@ -98,7 +98,7 @@ class WebtoonTranslationsView :
                     .offset(bgX.pxToDp(), bgY.pxToDp())
                     .size(bgWidth.pxToDp(),bgHeight.pxToDp())
                     .rotate(if (isVertical) 0f else block.angle)
-                    .background(Color.Blue, shape = RoundedCornerShape(4.dp)),
+                    .background(Color.White, shape = RoundedCornerShape(4.dp)),
             )
         }
     }
