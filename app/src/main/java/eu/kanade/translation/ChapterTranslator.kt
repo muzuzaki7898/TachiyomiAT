@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -226,20 +227,22 @@ class ChapterTranslator(
              * saving the stream to tmp file cuz i can't get the
              * BitmapFactory.decodeStream() to work with the stream from .cbz archive
              */
-            for ((fileName, streamFn) in streams) {
-
-                streamFn().use { tmpFile.openOutputStream().use { out -> it.copyTo(out) } }
-                val image = InputImage.fromFilePath(context, tmpFile.uri)
-                val result = textRecognizer.recognize(image)
-                val blocks = result.textBlocks.filter { it.boundingBox != null && it.text.length > 1 }
-                val pageTranslation = convertToPageTranslation(blocks, image.width, image.height)
-                if (pageTranslation.blocks.isNotEmpty()) pages[fileName] = pageTranslation
+            withContext(Dispatchers.IO) {
+                for ((fileName, streamFn) in streams) {
+                    coroutineContext.ensureActive()
+                    streamFn().use { tmpFile.openOutputStream().use { out -> it.copyTo(out) } }
+                    val image = InputImage.fromFilePath(context, tmpFile.uri)
+                    val result = textRecognizer.recognize(image)
+                    val blocks = result.textBlocks.filter { it.boundingBox != null && it.text.length > 1 }
+                    val pageTranslation = convertToPageTranslation(blocks, image.width, image.height)
+                    if (pageTranslation.blocks.isNotEmpty()) pages[fileName] = pageTranslation
+                }
             }
             tmpFile.delete()
-
-            //Translate the text in blocks , this mutates the original blocks
-            textTranslator.translate(pages)
-
+            withContext(Dispatchers.IO) {
+                //Translate the text in blocks , this mutates the original blocks
+                textTranslator.translate(pages)
+            }
             //Serialize the Map and save to translations json file
             Json.encodeToStream(pages, translationMangaDir.createFile(saveFile)!!.openOutputStream())
             translation.status = Translation.State.TRANSLATED

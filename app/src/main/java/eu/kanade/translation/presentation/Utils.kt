@@ -1,5 +1,5 @@
 package eu.kanade.translation.presentation
-
+import androidx.compose.ui.unit.Density
 import android.util.DisplayMetrics
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Float.pxToDp(): Dp {
-    val density = LocalDensity.current.density
-    return (this / (density / DisplayMetrics.DENSITY_DEFAULT)).dp
+    return (this/LocalDensity.current.density).dp
+//    val density = LocalDensity.current.density
+//    return (this / (density / DisplayMetrics.DENSITY_DEFAULT)).dp
 }
