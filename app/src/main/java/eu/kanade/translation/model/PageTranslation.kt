@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PageTranslation(
-    var blocks: ArrayList<TranslationBlock> = ArrayList(),
+    var blocks: MutableList<TranslationBlock> = mutableListOf(),
     var imgWidth: Float = 0f,
     var imgHeight: Float = 0f,
     ) {

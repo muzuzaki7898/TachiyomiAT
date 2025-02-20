@@ -48,6 +48,7 @@ import tachiyomi.i18n.at.ATMR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.InputStream
+import kotlin.math.abs
 
 
 class ChapterTranslator(
@@ -247,9 +248,6 @@ class ChapterTranslator(
     }
 
     private fun convertToPageTranslation(blocks: List<Text.TextBlock>, width: Int, height: Int): PageTranslation {
-        //TODO IMPLEMENT SMART BLOCK MERGE
-        //TODO DO EXTRA SHIT FOR JAPANESE
-        //TODO USE NON PIXEL DEPENDENT UNIT
         val translation = PageTranslation(imgWidth = width.toFloat(), imgHeight = height.toFloat())
         for (block in blocks) {
             val bounds = block.boundingBox!!
@@ -267,8 +265,56 @@ class ChapterTranslator(
                 ),
             )
         }
+        //Smart merge overlapping text blocks
+        translation.blocks=smartMergeBlocks(translation.blocks,50,30,30)
+
         return translation
     }
+
+    private fun smartMergeBlocks(
+        blocks: List<TranslationBlock>,
+        widthThreshold: Int,
+        xThreshold: Int,
+        yThreshold: Int
+    ): MutableList<TranslationBlock> {
+        if (blocks.isEmpty()) return mutableListOf()
+
+        val merged = mutableListOf<TranslationBlock>()
+        var current = blocks[0]
+        for (i in 1 until blocks.size) {
+            val next = blocks[i]
+            if (shouldMergeTextBlock(current, next, widthThreshold, xThreshold, yThreshold)) {
+                current = mergeTextBlock(current, next)
+            } else {
+                merged.add(current)
+                current = next
+            }
+        }
+        merged.add(current)
+        return merged
+    }
+
+    private fun shouldMergeTextBlock(
+        a: TranslationBlock,
+        b: TranslationBlock,
+        widthThreshold: Int,
+        xThreshold: Int,
+        yThreshold: Int
+    ): Boolean {
+        val isWidthSimilar = (b.width < a.width) || (abs(a.width - b.width) < widthThreshold)
+        val isXClose = abs(a.x - b.x) < xThreshold
+        val isYClose = (b.y - (a.y + a.height)) < yThreshold
+        return isWidthSimilar && isXClose && isYClose
+    }
+
+    private fun mergeTextBlock(a: TranslationBlock, b: TranslationBlock): TranslationBlock {
+        val newX = kotlin.math.min(a.x, b.x)
+        val newY = a.y
+        val newWidth = kotlin.math.max(a.x + a.width, b.x + b.width) -newX
+        val newHeight = kotlin.math.max(a.y + a.height, b.y + b.height)-newY
+        return TranslationBlock(a.text+" "+b.text,a.translation+" "+b.translation,newWidth,newHeight,newX,newY,a.symHeight,a.symWidth,a.angle)
+    }
+
 
     private fun getChapterPages(chapterPath: UniFile): List<Pair<String, () -> InputStream>> {
         if (chapterPath.isFile) {
