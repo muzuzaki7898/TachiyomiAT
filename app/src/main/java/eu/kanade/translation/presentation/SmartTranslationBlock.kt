@@ -1,10 +1,13 @@
 package eu.kanade.translation.presentation
 
+import android.graphics.PointF
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -25,19 +28,22 @@ import kotlin.math.max
 
 @Composable
 fun SmartTranslationBlock(
-    block: TranslationBlock, scaleFactor: Float, fontFamily: FontFamily,
-) {
+    modifier: Modifier = Modifier,
+    block: TranslationBlock, scaleFactor: Float, offset: PointF = PointF(0f, 0f), fontFamily: FontFamily,
+
+    ) {
     val padX = block.symWidth * 2
     val padY = block.symHeight
-    val xPx = max((block.x - padX / 2) * scaleFactor, 0.0f).pxToDp()
-    val yPx = max((block.y - padY / 2) * scaleFactor, 0.0f).pxToDp()
+    val xPx = max((block.x - padX / 2) * scaleFactor, 0.0f) + offset.x
+    val yPx = max((block.y - padY / 2) * scaleFactor, 0.0f) + offset.y
     val width = ((block.width + padX) * scaleFactor).pxToDp()
     val height = ((block.height + padY) * scaleFactor).pxToDp()
     val isVertical = block.angle > 85
     Box(
-        modifier = Modifier
-            .offset(xPx, yPx)
-            .size(width, height),
+        modifier = modifier
+            .wrapContentSize(Alignment.CenterStart, true)
+            .offset(xPx.pxToDp(), yPx.pxToDp())
+            .requiredSize(width, height),
     ) {
         val density = LocalDensity.current
         val fontSize = remember { mutableStateOf(16.sp) }
@@ -65,7 +71,7 @@ fun SmartTranslationBlock(
                         modifier = Modifier
                             .width(width)
                             .rotate(if (isVertical) 0f else block.angle)
-                            .align(Alignment.Center)
+                            .align(Alignment.Center),
                     )
                 }[0].measure(Constraints(maxWidth = maxWidthPx))
 
@@ -93,7 +99,7 @@ fun SmartTranslationBlock(
                         .width(width)
                         .rotate(if (isVertical) 0f else block.angle)
                         .align(Alignment.Center)
-//                        .background(color = Color.Red),
+//                        .background(color = Color.Blue),
                 )
             }[0].measure(constraints)
 
