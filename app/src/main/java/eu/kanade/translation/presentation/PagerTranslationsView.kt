@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
@@ -80,26 +81,26 @@ class PagerTranslationsView :
 
     @Composable
     override fun Content() {
+        val viewTL by viewTLState.collectAsState()
+        val scale by scaleState.collectAsState()
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .absoluteOffset(viewTL.x.pxToDp(), viewTL.y.pxToDp()),
         ) {
-            val scale by scaleState.collectAsState()
-            val viewTL by viewTLState.collectAsState()
-            TextBlockBackground(scale,viewTL)
-            TextBlockContent(scale,viewTL)
+            TextBlockBackground(scale)
+            TextBlockContent(scale)
         }
     }
 
     @Composable
-    fun TextBlockBackground(zoomScale: Float,viewOffset:PointF) {
+    fun TextBlockBackground(zoomScale: Float) {
         translation.blocks.forEach { block ->
             val padX = block.symWidth / 2
             val padY = block.symHeight / 2
-            val bgX = ((block.x - padX / 2) *zoomScale)+viewOffset.x
-            val bgY = ((block.y - padY / 2) *zoomScale)+viewOffset.y
-            val bgWidth = (block.width + padX) *zoomScale
-            val bgHeight = (block.height + padY) *zoomScale
+            val bgX = ((block.x - padX / 2) * 1) * zoomScale
+            val bgY = ((block.y - padY / 2) * 1) * zoomScale
+            val bgWidth = (block.width + padX) * zoomScale
+            val bgHeight = (block.height + padY) * zoomScale
             val isVertical = block.angle > 85
             Box(
                 modifier = Modifier
@@ -113,14 +114,12 @@ class PagerTranslationsView :
     }
 
     @Composable
-    fun TextBlockContent(zoomScale: Float,viewOffset:PointF) {
+    fun TextBlockContent(zoomScale: Float) {
         translation.blocks.forEach { block ->
             SmartTranslationBlock(
-                block=block,
-                scaleFactor=zoomScale,
-                offset = viewOffset,
-                fontFamily = fontFamily
-
+                block = block,
+                scaleFactor = zoomScale,
+                fontFamily = fontFamily,
             )
         }
     }

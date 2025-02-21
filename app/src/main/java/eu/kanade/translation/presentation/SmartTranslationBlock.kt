@@ -29,13 +29,13 @@ import kotlin.math.max
 @Composable
 fun SmartTranslationBlock(
     modifier: Modifier = Modifier,
-    block: TranslationBlock, scaleFactor: Float, offset: PointF = PointF(0f, 0f), fontFamily: FontFamily,
+    block: TranslationBlock, scaleFactor: Float, fontFamily: FontFamily,
 
     ) {
     val padX = block.symWidth * 2
     val padY = block.symHeight
-    val xPx = max((block.x - padX / 2) * scaleFactor, 0.0f) + offset.x
-    val yPx = max((block.y - padY / 2) * scaleFactor, 0.0f) + offset.y
+    val xPx = max((block.x - padX / 2) * scaleFactor, 0.0f)
+    val yPx = max((block.y - padY / 2) * scaleFactor, 0.0f)
     val width = ((block.width + padX) * scaleFactor).pxToDp()
     val height = ((block.height + padY) * scaleFactor).pxToDp()
     val isVertical = block.angle > 85
