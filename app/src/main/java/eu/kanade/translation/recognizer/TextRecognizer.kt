@@ -10,15 +10,16 @@ import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.io.Closeable
 
+class TextRecognizer(val language: TextRecognizerLanguage) : Closeable {
 
-class TextRecognizer(val language: TextRecognizerLanguage): Closeable {
-
-    private val recognizer = TextRecognition.getClient(when (language) {
-        TextRecognizerLanguage.ENGLISH -> TextRecognizerOptions.DEFAULT_OPTIONS
-        TextRecognizerLanguage.CHINESE -> ChineseTextRecognizerOptions.Builder().build()
-        TextRecognizerLanguage.JAPANESE -> JapaneseTextRecognizerOptions.Builder().build()
-        TextRecognizerLanguage.KOREAN -> KoreanTextRecognizerOptions.Builder().build()
-    })
+    private val recognizer = TextRecognition.getClient(
+        when (language) {
+            TextRecognizerLanguage.ENGLISH -> TextRecognizerOptions.DEFAULT_OPTIONS
+            TextRecognizerLanguage.CHINESE -> ChineseTextRecognizerOptions.Builder().build()
+            TextRecognizerLanguage.JAPANESE -> JapaneseTextRecognizerOptions.Builder().build()
+            TextRecognizerLanguage.KOREAN -> KoreanTextRecognizerOptions.Builder().build()
+        },
+    )
 
     fun recognize(image: InputImage): Text {
         return Tasks.await<Text>(recognizer.process(image))

@@ -1,11 +1,8 @@
 package eu.kanade.translation.presentation
 
-import android.graphics.PointF
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Text
@@ -29,9 +26,11 @@ import kotlin.math.max
 @Composable
 fun SmartTranslationBlock(
     modifier: Modifier = Modifier,
-    block: TranslationBlock, scaleFactor: Float, fontFamily: FontFamily,
+    block: TranslationBlock,
+    scaleFactor: Float,
+    fontFamily: FontFamily,
 
-    ) {
+) {
     val padX = block.symWidth * 2
     val padY = block.symHeight
     val xPx = max((block.x - padX / 2) * scaleFactor, 0.0f)
@@ -53,7 +52,7 @@ fun SmartTranslationBlock(
 
             // Binary search for optimal font size
             var low = 1
-            var high = 100  // Initial upper bound
+            var high = 100 // Initial upper bound
             var bestSize = low
 
             while (low <= high) {
@@ -98,7 +97,7 @@ fun SmartTranslationBlock(
                     modifier = Modifier
                         .width(width)
                         .rotate(if (isVertical) 0f else block.angle)
-                        .align(Alignment.Center)
+                        .align(Alignment.Center),
 //                        .background(color = Color.Blue),
                 )
             }[0].measure(constraints)

@@ -48,7 +48,7 @@ object SettingsTranslationScreen : SearchableSettings {
         val fromLangs = TextRecognizerLanguage.entries
         val toLangs = TextTranslatorLanguage.entries
         return Preference.PreferenceGroup(
-            title =stringResource(ATMR.strings.pref_group_setup),
+            title = stringResource(ATMR.strings.pref_group_setup),
             preferenceItems = persistentListOf(
                 Preference.PreferenceItem.ListPreference(
                     pref = translationPreferences.translateFromLanguage(),
@@ -103,7 +103,7 @@ object SettingsTranslationScreen : SearchableSettings {
                 ),
                 Preference.PreferenceItem.EditTextPreference(
                     pref = translationPreferences.translationEngineMaxOutputTokens(),
-                    title =stringResource(ATMR.strings.pref_engine_max_output),
+                    title = stringResource(ATMR.strings.pref_engine_max_output),
                 ),
             ),
         )

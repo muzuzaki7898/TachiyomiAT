@@ -10,7 +10,10 @@ import tachiyomi.core.common.util.system.ImageUtil
 /**
  * Loader used to load a chapter from an archive file.
  */
-internal class ArchivePageLoader(private val reader: ArchiveReader,private val translations: Map<String, PageTranslation>) : PageLoader() {
+internal class ArchivePageLoader(
+    private val reader: ArchiveReader,
+    private val translations: Map<String, PageTranslation>,
+) : PageLoader() {
     override var isLocal: Boolean = true
 
     override suspend fun getPages(): List<ReaderPage> = reader.useEntries { entries ->

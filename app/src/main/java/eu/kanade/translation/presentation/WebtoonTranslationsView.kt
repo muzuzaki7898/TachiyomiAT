@@ -28,7 +28,6 @@ import androidx.core.view.isVisible
 import eu.kanade.translation.data.TranslationFont
 import eu.kanade.translation.model.PageTranslation
 
-
 class WebtoonTranslationsView :
     AbstractComposeView {
 
@@ -72,8 +71,11 @@ class WebtoonTranslationsView :
                 .fillMaxSize()
                 .onSizeChanged {
                     size = it
-                    if (size == IntSize.Zero) hide()
-                    else show()
+                    if (size == IntSize.Zero) {
+                        hide()
+                    } else {
+                        show()
+                    }
                 },
         ) {
             if (size == IntSize.Zero) return
@@ -96,7 +98,7 @@ class WebtoonTranslationsView :
             Box(
                 modifier = Modifier
                     .offset(bgX.pxToDp(), bgY.pxToDp())
-                    .size(bgWidth.pxToDp(),bgHeight.pxToDp())
+                    .size(bgWidth.pxToDp(), bgHeight.pxToDp())
                     .rotate(if (isVertical) 0f else block.angle)
                     .background(Color.White, shape = RoundedCornerShape(4.dp)),
             )
@@ -107,9 +109,9 @@ class WebtoonTranslationsView :
     fun TextBlockContent(scaleFactor: Float) {
         translation.blocks.forEach { block ->
             SmartTranslationBlock(
-                block=block,
-                scaleFactor=scaleFactor,
-                fontFamily = fontFamily
+                block = block,
+                scaleFactor = scaleFactor,
+                fontFamily = fontFamily,
             )
         }
     }

@@ -126,10 +126,9 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { DownloadManager(app) }
         addSingletonFactory { DownloadCache(app) }
 
-        //TachiyomiAT
+        // TachiyomiAT
         addSingletonFactory { TranslationProvider(app) }
         addSingletonFactory { TranslationManager(app) }
-
 
         addSingletonFactory { TrackerManager() }
         addSingletonFactory { DelayedTrackingStore(app) }

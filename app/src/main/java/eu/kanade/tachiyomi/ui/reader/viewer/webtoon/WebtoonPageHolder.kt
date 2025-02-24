@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
-import androidx.compose.ui.text.font.FontFamily
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updateMargins
@@ -50,13 +49,13 @@ import uy.kohesive.injekt.api.get
 class WebtoonPageHolder(
     private val frame: ReaderPageImageView,
     viewer: WebtoonViewer,
-    //TachiyomiAT
+    // TachiyomiAT
     translationPreferences: TranslationPreferences = Injekt.get(),
     private val font: TranslationFont = TranslationFont.fromPref(translationPreferences.translationFont()),
     readerPreferences: ReaderPreferences = Injekt.get(),
 ) : WebtoonBaseHolder(frame, viewer) {
 
-    //TachiyomiAT
+    // TachiyomiAT
     private var showTranslations = true
     private var translationsView: WebtoonTranslationsView? = null
 
@@ -101,7 +100,7 @@ class WebtoonPageHolder(
         frame.onImageLoadError = { setError() }
         frame.onScaleChanged = { viewer.activity.hideMenu() }
 
-        //TachiyomiAT
+        // TachiyomiAT
         showTranslations = readerPreferences.showTranslations().get()
         readerPreferences.showTranslations().changes().onEach {
             showTranslations = it
@@ -175,7 +174,7 @@ class WebtoonPageHolder(
 
                     Page.State.READY -> {
                         setImage()
-                        //TachiyomiAT
+                        // TachiyomiAT
                         addTranslationsView()
                     }
                     Page.State.ERROR -> setError()
@@ -277,7 +276,7 @@ class WebtoonPageHolder(
     private fun setError() {
         progressContainer.isVisible = false
         initErrorLayout()
-        //TachiyomiAT
+        // TachiyomiAT
         translationsView?.hide()
     }
 
@@ -287,11 +286,11 @@ class WebtoonPageHolder(
     private fun onImageDecoded() {
         progressContainer.isVisible = false
         removeErrorLayout()
-        //TachiyomiAT
+        // TachiyomiAT
         translationsView?.show()
     }
 
-    //TachiyomiAT
+    // TachiyomiAT
     private fun addTranslationsView() {
         if (page?.translation == null) return
         frame.removeView(translationsView)

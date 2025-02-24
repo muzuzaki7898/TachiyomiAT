@@ -30,7 +30,7 @@ class TranslationManager(
     private val sourceManager: SourceManager = Injekt.get(),
     private val translationPreferences: TranslationPreferences = Injekt.get(),
 ) {
-    private val translator = ChapterTranslator(context, provider);
+    private val translator = ChapterTranslator(context, provider)
 
     val isRunning: Boolean
         get() = translator.isRunning
@@ -61,8 +61,8 @@ class TranslationManager(
     }
 
     fun translateChapter(manga: Manga, chapters: Chapter) {
-        translator.queueChapter(manga, chapters);
-        startTranslation();
+        translator.queueChapter(manga, chapters)
+        startTranslation()
     }
 
     fun getChapterTranslationStatus(
@@ -84,9 +84,9 @@ class TranslationManager(
         mangaTitle: String,
         sourceId: Long,
     ): Boolean {
-        val source = sourceManager.get(sourceId);
+        val source = sourceManager.get(sourceId)
         if (source == null) return false
-        val file = provider.findTranslationFile(chapterName, chapterScanlator, mangaTitle, source);
+        val file = provider.findTranslationFile(chapterName, chapterScanlator, mangaTitle, source)
         return file?.exists() == true
     }
     fun getChapterTranslation(
@@ -104,10 +104,8 @@ class TranslationManager(
             ) ?: return emptyMap()
             return getChapterTranslation(file)
         } catch (_: Exception) {
-
         }
         return emptyMap()
-
     }
 
     fun getChapterTranslation(
@@ -124,7 +122,7 @@ class TranslationManager(
     fun deleteTranslation(chapter: Chapter, manga: Manga, source: Source) {
         launchIO {
             removeFromTranslationQueue(chapter)
-            val file = provider.findTranslationFile(chapter.name, chapter.scanlator, manga.title, source);
+            val file = provider.findTranslationFile(chapter.name, chapter.scanlator, manga.title, source)
             file?.delete()
         }
     }

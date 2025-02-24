@@ -52,7 +52,6 @@ import uy.kohesive.injekt.api.get
 import java.io.InputStream
 import kotlin.math.abs
 
-
 class ChapterTranslator(
     private val context: Context,
     private val provider: TranslationProvider,
@@ -187,18 +186,18 @@ class ChapterTranslator(
             context.toast(ATMR.strings.error_mlkit_language_unsupported)
             return
         }
-        val translation = Translation(source, manga, chapter, fromLang, toLang);
-        addToQueue(translation);
+        val translation = Translation(source, manga, chapter, fromLang, toLang)
+        addToQueue(translation)
     }
 
     private suspend fun translateChapter(translation: Translation) {
         try {
-            //Check if recognizer reinitialization is needed
+            // Check if recognizer reinitialization is needed
             if (translation.fromLang != textRecognizer.language) {
                 textRecognizer.close()
                 textRecognizer = TextRecognizer(translation.fromLang)
             }
-            //Check if translator reinitialization is needed
+            // Check if translator reinitialization is needed
             if (translation.fromLang != textTranslator.fromLang || translation.toLang != textTranslator.toLang) {
                 withContext(Dispatchers.IO) {
                     textTranslator.close()
@@ -206,13 +205,13 @@ class ChapterTranslator(
                 textTranslator = TextTranslators.fromPref(translationPreferences.translationEngine())
                     .build(translationPreferences, translation.fromLang, translation.toLang)
             }
-            //Directory where translations for a manga is stored
+            // Directory where translations for a manga is stored
             val translationMangaDir = provider.getMangaDir(translation.manga.title, translation.source)
 
-            //translations save file
+            // translations save file
             val saveFile = provider.getTranslationFileName(translation.chapter.name, translation.chapter.scanlator)
 
-            //Directory where chapter images is stored
+            // Directory where chapter images is stored
             val chapterPath = downloadProvider.findChapterDir(
                 translation.chapter.name,
                 translation.chapter.scanlator,
@@ -240,13 +239,12 @@ class ChapterTranslator(
             }
             tmpFile.delete()
             withContext(Dispatchers.IO) {
-                //Translate the text in blocks , this mutates the original blocks
+                // Translate the text in blocks , this mutates the original blocks
                 textTranslator.translate(pages)
             }
-            //Serialize the Map and save to translations json file
+            // Serialize the Map and save to translations json file
             Json.encodeToStream(pages, translationMangaDir.createFile(saveFile)!!.openOutputStream())
             translation.status = Translation.State.TRANSLATED
-
         } catch (error: Throwable) {
             translation.status = Translation.State.ERROR
             logcat(LogPriority.ERROR, error)
@@ -271,8 +269,8 @@ class ChapterTranslator(
                 ),
             )
         }
-        //Smart merge overlapping text blocks
-        translation.blocks=smartMergeBlocks(translation.blocks,50,30,30)
+        // Smart merge overlapping text blocks
+        translation.blocks = smartMergeBlocks(translation.blocks, 50, 30, 30)
 
         return translation
     }
@@ -281,7 +279,7 @@ class ChapterTranslator(
         blocks: List<TranslationBlock>,
         widthThreshold: Int,
         xThreshold: Int,
-        yThreshold: Int
+        yThreshold: Int,
     ): MutableList<TranslationBlock> {
         if (blocks.isEmpty()) return mutableListOf()
 
@@ -305,7 +303,7 @@ class ChapterTranslator(
         b: TranslationBlock,
         widthThreshold: Int,
         xThreshold: Int,
-        yThreshold: Int
+        yThreshold: Int,
     ): Boolean {
         val isWidthSimilar = (b.width < a.width) || (abs(a.width - b.width) < widthThreshold)
         val isXClose = abs(a.x - b.x) < xThreshold
@@ -316,11 +314,17 @@ class ChapterTranslator(
     private fun mergeTextBlock(a: TranslationBlock, b: TranslationBlock): TranslationBlock {
         val newX = kotlin.math.min(a.x, b.x)
         val newY = a.y
-        val newWidth = kotlin.math.max(a.x + a.width, b.x + b.width) -newX
-        val newHeight = kotlin.math.max(a.y + a.height, b.y + b.height)-newY
-        return TranslationBlock(a.text+" "+b.text,a.translation+" "+b.translation,newWidth,newHeight,newX,newY,a.symHeight,a.symWidth,a.angle)
+        val newWidth = kotlin.math.max(a.x + a.width, b.x + b.width) - newX
+        val newHeight = kotlin.math.max(a.y + a.height, b.y + b.height) - newY
+        return TranslationBlock(
+            a.text + " " + b.text,
+            a.translation + " " + b.translation,
+            newWidth,
+            newHeight,
+            newX, newY, a.symHeight,
+            a.symWidth, a.angle,
+        )
     }
-
 
     private fun getChapterPages(chapterPath: UniFile): List<Pair<String, () -> InputStream>> {
         if (chapterPath.isFile) {
@@ -343,7 +347,7 @@ class ChapterTranslator(
     }
 
     private fun addToQueue(translation: Translation) {
-        translation.status = Translation.State.QUEUE;
+        translation.status = Translation.State.QUEUE
         _queueState.update {
             it + translation
         }
@@ -362,7 +366,9 @@ class ChapterTranslator(
         _queueState.update { queue ->
             val translations = queue.filter { predicate(it) }
             translations.forEach { translation ->
-                if (translation.status == Translation.State.TRANSLATING || translation.status == Translation.State.QUEUE) {
+                if (translation.status == Translation.State.TRANSLATING ||
+                    translation.status == Translation.State.QUEUE
+                ) {
                     translation.status = Translation.State.NOT_TRANSLATED
                 }
             }
@@ -381,7 +387,9 @@ class ChapterTranslator(
     private fun internalClearQueue() {
         _queueState.update {
             it.forEach { translation ->
-                if (translation.status == Translation.State.TRANSLATING || translation.status == Translation.State.QUEUE) {
+                if (translation.status == Translation.State.TRANSLATING ||
+                    translation.status == Translation.State.QUEUE
+                ) {
                     translation.status = Translation.State.NOT_TRANSLATED
                 }
             }

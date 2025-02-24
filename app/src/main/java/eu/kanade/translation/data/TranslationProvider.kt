@@ -50,8 +50,8 @@ class TranslationProvider(
      * @param source the source to query.
      */
     fun findSourceDir(source: Source): UniFile? {
-        val sourceDir=translationDir?.findFile(getSourceDirName(source))
-        return sourceDir;
+        val sourceDir = translationDir?.findFile(getSourceDirName(source))
+        return sourceDir
     }
 
     /**
@@ -74,7 +74,12 @@ class TranslationProvider(
      * @param source the source of the chapter.
      */
 
-    fun findTranslationFile(chapterName: String, chapterScanlator: String?, mangaTitle: String, source: Source): UniFile? {
+    fun findTranslationFile(
+        chapterName: String,
+        chapterScanlator: String?,
+        mangaTitle: String,
+        source: Source,
+    ): UniFile? {
         val mangaDir = findMangaDir(mangaTitle, source)
         return mangaDir?.findFile(getTranslationFileName(chapterName, chapterScanlator))
     }
@@ -137,5 +142,4 @@ class TranslationProvider(
             "Chapter"
         }
     }
-
 }

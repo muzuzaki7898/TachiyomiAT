@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.ui.webview.WebViewActivity
 import eu.kanade.tachiyomi.widget.ViewPagerAdapter
 import eu.kanade.translation.data.TranslationFont
 import eu.kanade.translation.presentation.PagerTranslationsView
-import eu.kanade.translation.presentation.WebtoonTranslationsView
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
@@ -46,13 +45,13 @@ class PagerPageHolder(
     readerThemedContext: Context,
     val viewer: PagerViewer,
     val page: ReaderPage,
-    //TachiyomiAT
+    // TachiyomiAT
     translationPreferences: TranslationPreferences = Injekt.get(),
     private val font: TranslationFont = TranslationFont.fromPref(translationPreferences.translationFont()),
     readerPreferences: ReaderPreferences = Injekt.get(),
 ) : ReaderPageImageView(readerThemedContext), ViewPagerAdapter.PositionableView {
 
-    //TachiyomiAT
+    // TachiyomiAT
     private var showTranslations = true
     private var translationsView: PagerTranslationsView? = null
 
@@ -81,7 +80,7 @@ class PagerPageHolder(
 
     init {
         loadJob = scope.launch { loadPageAndProcessStatus() }
-        //TachiyomiAT
+        // TachiyomiAT
         showTranslations = readerPreferences.showTranslations().get()
         readerPreferences.showTranslations().changes().onEach {
             showTranslations = it
@@ -136,7 +135,7 @@ class PagerPageHolder(
                     }
                     Page.State.READY -> {
                         setImage()
-                        //TachiyomiAT
+                        // TachiyomiAT
                         addTranslationsView()
                     }
                     Page.State.ERROR -> setError()
@@ -279,16 +278,16 @@ class PagerPageHolder(
     private fun setError() {
         progressIndicator?.hide()
         showErrorLayout()
-        //TachiyomiAT
+        // TachiyomiAT
         translationsView?.hide()
     }
 
     override fun onImageLoaded() {
         super.onImageLoaded()
         progressIndicator?.hide()
-        //TachiyomiAT
+        // TachiyomiAT
         updateTranslationCoords(pageView as SubsamplingScaleImageView)
-        //TachiyomiAT
+        // TachiyomiAT
         translationsView?.show()
     }
 
@@ -298,7 +297,7 @@ class PagerPageHolder(
     override fun onImageLoadError() {
         super.onImageLoadError()
         setError()
-        //TachiyomiAT
+        // TachiyomiAT
         translationsView?.hide()
     }
 
@@ -308,17 +307,17 @@ class PagerPageHolder(
     override fun onScaleChanged(newScale: Float) {
         super.onScaleChanged(newScale)
         viewer.activity.hideMenu()
-        //TachiyomiAT
+        // TachiyomiAT
         updateTranslationCoords(pageView as SubsamplingScaleImageView)
     }
 
-    //TachiyomiAT
+    // TachiyomiAT
     override fun onCenterChanged(newCenter: PointF?) {
         super.onCenterChanged(newCenter)
         updateTranslationCoords(pageView as SubsamplingScaleImageView)
     }
 
-    //TachiyomiAT
+    // TachiyomiAT
     private fun addTranslationsView() {
         if (page.translation == null) return
         removeView(translationsView)
@@ -327,7 +326,7 @@ class PagerPageHolder(
         addView(translationsView, MATCH_PARENT, MATCH_PARENT)
     }
 
-    //TachiyomiAT
+    // TachiyomiAT
     private fun updateTranslationCoords(vi: SubsamplingScaleImageView) {
         if (page.translation == null) return
         val coords = vi.sourceToViewCoord(0f, 0f)
@@ -336,7 +335,6 @@ class PagerPageHolder(
         }
         translationsView?.scaleState?.value = vi.scale
     }
-
 
     private fun showErrorLayout(): ReaderErrorBinding {
         if (errorLayout == null) {

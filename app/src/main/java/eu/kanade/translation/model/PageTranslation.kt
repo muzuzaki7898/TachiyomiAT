@@ -7,11 +7,10 @@ data class PageTranslation(
     var blocks: MutableList<TranslationBlock> = mutableListOf(),
     var imgWidth: Float = 0f,
     var imgHeight: Float = 0f,
-    ) {
+) {
     companion object {
         val EMPTY = PageTranslation()
     }
-
 }
 
 @Serializable

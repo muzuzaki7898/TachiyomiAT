@@ -46,10 +46,13 @@ class PageTranslationHelper {
             )
         }
 
-        //Checks if two block overlap each other and are in same orientation
+        // Checks if two block overlap each other and are in same orientation
         private fun shouldMerge(r1: TranslationBlock, r2: TranslationBlock): Boolean {
-            return abs(r1.angle - r2.angle) < 10 && r1.x < (r2.x + r2.width) && (r1.x + r1.width) > r2.x &&
-                r1.y < (r2.y + r2.height) && (r1.y + r1.height) > r2.y
+            return abs(r1.angle - r2.angle) < 10 &&
+                r1.x < (r2.x + r2.width) &&
+                (r1.x + r1.width) > r2.x &&
+                r1.y < (r2.y + r2.height) &&
+                (r1.y + r1.height) > r2.y
         }
     }
 }
