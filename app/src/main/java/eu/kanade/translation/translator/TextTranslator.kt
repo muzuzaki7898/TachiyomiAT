@@ -18,7 +18,8 @@ enum class TextTranslators(val label: String) {
     MLKIT("MlKit (On Device)"),
     GOOGLE("Google Translate"),
     GEMINI("Gemini AI [API KEY]"),
-    OPENROUTER("OpenRouter [API KEY]");
+    OPENROUTER("OpenRouter [API KEY]"),
+    PERPLEXITY("Perplexity AI [API KEY]");
 
     fun build(pref : TranslationPreferences= Injekt.get(), fromLang: TextRecognizerLanguage = TextRecognizerLanguage.fromPref(pref.translateFromLanguage()), toLang: TextTranslatorLanguage = TextTranslatorLanguage.fromPref(pref.translateToLanguage())): TextTranslator{
         val maxOutputTokens=pref.translationEngineMaxOutputTokens().get().toIntOrNull()?:8914
@@ -30,6 +31,8 @@ enum class TextTranslators(val label: String) {
             GOOGLE ->GoogleTranslator(fromLang, toLang)
             GEMINI -> GeminiTranslator(fromLang, toLang,apiKey,modelName,maxOutputTokens,temperature)
             OPENROUTER -> OpenRouterTranslator(fromLang, toLang,apiKey,modelName,maxOutputTokens,temperature)
+            PERPLEXITY -> PerplexityTranslator(fromLang, toLang, apiKey, modelName) 
+            
         }
     }
 
