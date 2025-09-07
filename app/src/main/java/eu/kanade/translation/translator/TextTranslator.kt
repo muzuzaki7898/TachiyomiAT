@@ -31,7 +31,7 @@ enum class TextTranslators(val label: String) {
             GOOGLE ->GoogleTranslator(fromLang, toLang)
             GEMINI -> GeminiTranslator(fromLang, toLang,apiKey,modelName,maxOutputTokens,temperature)
             OPENROUTER -> OpenRouterTranslator(fromLang, toLang,apiKey,modelName,maxOutputTokens,temperature)
-            PERPLEXITY -> PerplexityTranslator(fromLang, toLang, apiKey, modelName) 
+            PERPLEXITY -> PerplexityTranslator(fromLang, toLang,apiKey,modelName,maxOutputTokens,temperature) 
             
         }
     }
